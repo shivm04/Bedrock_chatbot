@@ -10,15 +10,16 @@ Globals:
 
 Resources:
 
-# ===============================
-# Lambda Function
-# ===============================
+# ===================================
+# Lambda Function (Bedrock Backend)
+# ===================================
   ChatbotFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: bedrock-chatbot
       Handler: app.lambda_handler
       CodeUri: backend/
+
       Policies:
         - Statement:
             - Effect: Allow
@@ -36,30 +37,45 @@ Resources:
           AllowHeaders:
             - "*"
 
-# ===============================
-# S3 Static Website
-# ===============================
+# ===================================
+# S3 Static Website (Frontend)
+# ===================================
   FrontendBucket:
     Type: AWS::S3::Bucket
     Properties:
       WebsiteConfiguration:
         IndexDocument: index.html
+        ErrorDocument: index.html
+
+      # ✅ MUST be inside Properties
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        IgnorePublicAcls: false
+        BlockPublicPolicy: false
+        RestrictPublicBuckets: false
+
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
 
   FrontendBucketPolicy:
     Type: AWS::S3::BucketPolicy
+    DependsOn: FrontendBucket
     Properties:
       Bucket: !Ref FrontendBucket
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Effect: Allow
+          - Sid: PublicReadGetObject
+            Effect: Allow
             Principal: "*"
-            Action: s3:GetObject
+            Action:
+              - s3:GetObject
             Resource: !Sub "${FrontendBucket.Arn}/*"
 
-# ===============================
-# OUTPUTS (IMPORTANT)
-# ===============================
+# ===================================
+# OUTPUTS
+# ===================================
 Outputs:
 
   LambdaFunctionURL:
@@ -71,4 +87,5 @@ Outputs:
     Value: !GetAtt FrontendBucket.WebsiteURL
 
   BucketName:
+    Description: Frontend Bucket Name
     Value: !Ref FrontendBucket

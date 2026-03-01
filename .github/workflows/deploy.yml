@@ -63,9 +63,15 @@ jobs:
       # ---------------------------
       # Deploy Infrastructure
       # ---------------------------
-      - name: SAM Deploy
-        run: sam deploy --no-confirm-changeset
-
+      - name: Deploy SAM
+        run: |
+          sam deploy \
+            --stack-name bedrock-chatbot \
+            --region us-east-1 \
+            --capabilities CAPABILITY_IAM \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --resolve-s3
       # ---------------------------
       # Fetch Stack Outputs
       # ---------------------------

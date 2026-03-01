@@ -1,10 +1,5 @@
 name: Deploy Bedrock Chatbot
 
-# on:
-#   push:
-#     branches:
-#       - main
-
 on:
   workflow_dispatch:
 
@@ -14,7 +9,7 @@ jobs:
 
     steps:
       # ---------------------------
-      # Checkout Code
+      # Checkout Repository
       # ---------------------------
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -30,10 +25,43 @@ jobs:
           aws-region: us-east-1
 
       # ---------------------------
-      # Install SAM CLI
+      # Install Python + pip (if missing)
+      # Amazon Linux compatible
       # ---------------------------
-      - name: Install AWS SAM
-        run: pip install aws-sam-cli
+      - name: Install Python & pip
+        run: |
+          if ! command -v python3 &> /dev/null
+          then
+            echo "Installing Python3..."
+            sudo dnf install -y python3
+          fi
+
+          if ! command -v pip3 &> /dev/null
+          then
+            echo "Installing pip3..."
+            sudo dnf install -y python3-pip
+          fi
+
+          python3 --version
+          pip3 --version
+
+      # ---------------------------
+      # Install AWS SAM CLI
+      # ---------------------------
+      - name: Install AWS SAM CLI
+        run: |
+          pip3 install --user aws-sam-cli
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # ---------------------------
+      # Verify Tools (debug step)
+      # ---------------------------
+      - name: Verify Installation
+        run: |
+          which python3
+          which pip3
+          which sam || true
+          sam --version
 
       # ---------------------------
       # Build SAM Application

@@ -25,43 +25,34 @@ jobs:
           aws-region: us-east-1
 
       # ---------------------------
-      # Install Python + pip (if missing)
-      # Amazon Linux compatible
+      # Install Python 3.12 (REQUIRED for SAM)
       # ---------------------------
-      - name: Install Python & pip
+      - name: Install Python 3.12
         run: |
-          if ! command -v python3 &> /dev/null
+          if ! command -v python3.12 &> /dev/null
           then
-            echo "Installing Python3..."
-            sudo dnf install -y python3
+            echo "Installing Python 3.12..."
+            sudo dnf install -y python3.12 python3.12-pip
           fi
 
-          if ! command -v pip3 &> /dev/null
-          then
-            echo "Installing pip3..."
-            sudo dnf install -y python3-pip
-          fi
-
-          python3 --version
-          pip3 --version
+          python3.12 --version
 
       # ---------------------------
       # Install AWS SAM CLI
       # ---------------------------
       - name: Install AWS SAM CLI
         run: |
-          pip3 install --user aws-sam-cli
+          python3.12 -m pip install --user aws-sam-cli
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       # ---------------------------
-      # Verify Tools (debug step)
+      # Verify Environment
       # ---------------------------
       - name: Verify Installation
         run: |
-          which python3
-          which pip3
-          which sam || true
+          which python3.12
           sam --version
+          aws --version
 
       # ---------------------------
       # Build SAM Application
@@ -100,7 +91,6 @@ jobs:
           echo "Website: $WEBSITE_URL"
 
           echo "window.API_URL='$API_URL';" > frontend/config.js
-
           echo "BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
 
       # ---------------------------
@@ -111,7 +101,7 @@ jobs:
           aws s3 sync frontend s3://$BUCKET_NAME --delete
 
       # ---------------------------
-      # Show Final Website URL
+      # Print Website URL
       # ---------------------------
       - name: Print Website URL
         run: |

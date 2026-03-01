@@ -1,20 +1,50 @@
 import json
 import boto3
+import os
 
-bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
+# Bedrock client
+bedrock = boto3.client(
+    service_name="bedrock-runtime",
+    region_name=os.environ.get("AWS_REGION", "us-east-1")
+)
 
-MODEL_ID = "anthropic.claude-haiku-4-5-20251001-v1:0"
+MODEL_ID = os.environ.get(
+    "MODEL_ID",
+    "anthropic.claude-3-haiku-20240307-v1:0"
+)
 
 
 def lambda_handler(event, context):
     try:
-        # Function URL request body
-        body = json.loads(event.get("body", "{}"))
-        user_message = body.get("message", "Hello")
+        # -----------------------------
+        # Handle CORS Preflight Request
+        # -----------------------------
+        method = event.get("requestContext", {}).get("http", {}).get("method")
 
+        if method == "OPTIONS":
+            return {
+                "statusCode": 200,
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "body": ""
+            }
+
+        # -----------------------------
+        # Parse request body
+        # -----------------------------
+        body = json.loads(event.get("body", "{}"))
+        user_message = body.get("message", "")
+
+        if not user_message:
+            return response_json(400, {"error": "Message is required"})
+
+        # -----------------------------
+        # Claude Request Payload
+        # -----------------------------
         payload = {
             "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 300,
+            "max_tokens": 500,
             "messages": [
                 {
                     "role": "user",
@@ -23,6 +53,9 @@ def lambda_handler(event, context):
             ]
         }
 
+        # -----------------------------
+        # Call Bedrock Claude Model
+        # -----------------------------
         response = bedrock.invoke_model(
             modelId=MODEL_ID,
             body=json.dumps(payload),
@@ -30,27 +63,35 @@ def lambda_handler(event, context):
             accept="application/json"
         )
 
-        result = json.loads(response["body"].read())
+        response_body = json.loads(response["body"].read())
 
-        reply = result["content"][0]["text"]
+        # Extract Claude reply
+        reply_text = response_body["content"][0]["text"]
 
-        return {
-            "statusCode": 200,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*"
-            },
-            "body": json.dumps({"reply": reply})
-        }
+        # -----------------------------
+        # Success Response
+        # -----------------------------
+        return response_json(200, {
+            "reply": reply_text
+        })
 
     except Exception as e:
         print("ERROR:", str(e))
 
-        return {
-            "statusCode": 500,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*"
-            },
-            "body": json.dumps({"error": str(e)})
-        }
+        return response_json(500, {
+            "error": "Internal Server Error",
+            "details": str(e)
+        })
+
+
+# -----------------------------
+# Common JSON Response Function
+# -----------------------------
+def response_json(status, body):
+    return {
+        "statusCode": status,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "body": json.dumps(body)
+    }

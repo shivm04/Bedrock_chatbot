@@ -1,0 +1,21 @@
+body{
+  background:#0f172a;
+  font-family:Arial;
+  color:white;
+  display:flex;
+  justify-content:center;
+  margin-top:60px;
+}
+
+.chat{
+  background:#1e293b;
+  padding:20px;
+  border-radius:10px;
+  width:400px;
+}
+
+#chatbox{
+  height:300px;
+  overflow:auto;
+  margin-bottom:10px;
+}

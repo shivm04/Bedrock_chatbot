@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Bedrock Chatbot Full Stack
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 30
+    MemorySize: 512
+
+Resources:
+
+# ===============================
+# Lambda Function
+# ===============================
+  ChatbotFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: bedrock-chatbot
+      Handler: app.lambda_handler
+      CodeUri: backend/
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: "*"
+
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins:
+            - "*"
+          AllowMethods:
+            - "*"
+          AllowHeaders:
+            - "*"
+
+# ===============================
+# S3 Static Website
+# ===============================
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      WebsiteConfiguration:
+        IndexDocument: index.html
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: s3:GetObject
+            Resource: !Sub "${FrontendBucket.Arn}/*"
+
+# ===============================
+# OUTPUTS (IMPORTANT)
+# ===============================
+Outputs:
+
+  LambdaFunctionURL:
+    Description: Lambda Function URL
+    Value: !GetAtt ChatbotFunctionUrl.FunctionUrl
+
+  S3WebsiteURL:
+    Description: Static Website URL
+    Value: !GetAtt FrontendBucket.WebsiteURL
+
+  BucketName:
+    Value: !Ref FrontendBucket

@@ -1,0 +1,90 @@
+name: Deploy Bedrock Chatbot
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      # ---------------------------
+      # Checkout Code
+      # ---------------------------
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # ---------------------------
+      # Configure AWS Credentials
+      # ---------------------------
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # ---------------------------
+      # Install SAM CLI
+      # ---------------------------
+      - name: Install AWS SAM
+        run: pip install aws-sam-cli
+
+      # ---------------------------
+      # Build SAM Application
+      # ---------------------------
+      - name: SAM Build
+        run: sam build
+
+      # ---------------------------
+      # Deploy Infrastructure
+      # ---------------------------
+      - name: SAM Deploy
+        run: sam deploy --no-confirm-changeset
+
+      # ---------------------------
+      # Fetch Stack Outputs
+      # ---------------------------
+      - name: Fetch Outputs
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name bedrock-chatbot \
+            --query "Stacks[0].Outputs[?OutputKey=='LambdaFunctionURL'].OutputValue" \
+            --output text)
+
+          BUCKET_NAME=$(aws cloudformation describe-stacks \
+            --stack-name bedrock-chatbot \
+            --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
+            --output text)
+
+          WEBSITE_URL=$(aws cloudformation describe-stacks \
+            --stack-name bedrock-chatbot \
+            --query "Stacks[0].Outputs[?OutputKey=='S3WebsiteURL'].OutputValue" \
+            --output text)
+
+          echo "API URL: $API_URL"
+          echo "Bucket: $BUCKET_NAME"
+          echo "Website: $WEBSITE_URL"
+
+          echo "window.API_URL='$API_URL';" > frontend/config.js
+
+          echo "BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
+
+      # ---------------------------
+      # Upload Frontend to S3
+      # ---------------------------
+      - name: Upload Frontend
+        run: |
+          aws s3 sync frontend s3://$BUCKET_NAME --delete
+
+      # ---------------------------
+      # Show Final Website URL
+      # ---------------------------
+      - name: Print Website URL
+        run: |
+          aws cloudformation describe-stacks \
+            --stack-name bedrock-chatbot \
+            --query "Stacks[0].Outputs[?OutputKey=='S3WebsiteURL'].OutputValue" \
+            --output text

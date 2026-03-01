@@ -1,18 +1,27 @@
 async function send(){
 
-  const msg = document.getElementById("message").value;
+  const input = document.getElementById("text");
+  const message = input.value;
 
-  document.getElementById("chatbox")
-    .innerHTML += `<p><b>You:</b> ${msg}</p>`;
+  if(!message) return;
+
+  const messages = document.getElementById("messages");
+
+  messages.innerHTML +=
+    `<div class="msg user"><b>You:</b> ${message}</div>`;
+
+  input.value="";
 
   const res = await fetch(window.API_URL,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json"},
-      body: JSON.stringify({message:msg})
+    method:"POST",
+    headers:{ "Content-Type":"application/json"},
+    body: JSON.stringify({ message })
   });
 
   const data = await res.json();
 
-  document.getElementById("chatbox")
-    .innerHTML += `<p><b>Bot:</b> ${data.reply}</p>`;
+  messages.innerHTML +=
+    `<div class="msg"><b>Claude:</b> ${data.reply}</div>`;
+
+  messages.scrollTop = messages.scrollHeight;
 }

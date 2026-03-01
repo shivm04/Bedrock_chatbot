@@ -1,23 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Bedrock Chatbot</title>
+  <title>Claude AI Chatbot</title>
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div class="chat">
-  <h2>AI Chatbot 🤖</h2>
+<header>
+  <h2>🤖 Claude AI Assistant</h2>
+</header>
 
-  <div id="chatbox"></div>
+<!-- HERO SECTION -->
+<section class="hero">
+  <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995" />
+</section>
 
-  <input id="message" placeholder="Ask anything"/>
-  <button onclick="send()">Send</button>
+<!-- FEATURES -->
+<section class="features">
+  <div class="card">
+    <img src="https://images.unsplash.com/photo-1676299081847-824916de030a">
+    <p>Powered by Claude AI</p>
+  </div>
+
+  <div class="card">
+    <img src="https://images.unsplash.com/photo-1675557009875-436f7b60fcb3">
+    <p>Serverless AWS Architecture</p>
+  </div>
+
+  <div class="card">
+    <img src="https://images.unsplash.com/photo-1674027444485-cec3da58eef4">
+    <p>Fast & Intelligent Responses</p>
+  </div>
+</section>
+
+<!-- CHAT -->
+<div class="chat-container">
+  <div id="messages"></div>
+
+  <div class="input-area">
+    <input id="text" placeholder="Ask Claude anything..." />
+    <button onclick="send()">Send</button>
+  </div>
 </div>
 
 <script src="config.js"></script>
 <script src="app.js"></script>
 
 </body>
-</html> 
+</html>
